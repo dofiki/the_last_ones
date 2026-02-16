@@ -1,3 +1,5 @@
+import type { Platform } from "./Platform";
+
 export class Player {
   position: { x: number; y: number };
   velocity: { vx: number; vy: number };
@@ -35,7 +37,7 @@ export class Player {
   }
 
   handleMovement(left: boolean, right: boolean, jump: boolean) {
-    // Stop movement if outside bounds
+    // stop movement, if out of bound
     if (this.position.x >= 500 && right) {
       this.velocity.vx = 0;
     } 
@@ -58,7 +60,7 @@ export class Player {
     }
   }
 
- update(ctx: CanvasRenderingContext2D, canvasWidth: number, platformHeight : number) {
+ update(ctx: CanvasRenderingContext2D, canvasWidth: number, platforms: Platform[]) {
   // Apply horizontal velocity
   this.position.x += this.velocity.vx;
 
@@ -71,21 +73,40 @@ export class Player {
   // at spawn : in sky
   this.isGrounded = false;
 
-  // platform collision
+  // platform collision : check each platform
   const playerBottom = this.position.y + this.height;
-  if (playerBottom >= platformHeight) {
-    this.position.y = platformHeight - this.height;
-    this.velocity.vy = 0;
-    this.isGrounded = true;
-  }
+  const playerLeft = this.position.x;
+  const playerRight = this.position.x + this.width;
 
-  // Left collision
+  platforms.forEach((platform) => {
+    const platformTop = platform.position.y;
+    const platformLeft = platform.position.x;
+    const platformRight = platform.position.x + platform.width;
+
+    // check if  horizontally aligned with platform
+    const isHorizontallyAligned = playerRight > platformLeft && playerLeft < platformRight;
+    
+    // check if player is landing on top of platform
+    if (
+      isHorizontallyAligned &&
+      playerBottom >= platformTop &&
+      playerBottom <= platformTop + 10 && // threshold for landing
+      this.velocity.vy >= 0 // only when falling or stationary
+    ) {
+      this.position.y = platformTop - this.height;
+      this.velocity.vy = 0;
+      this.isGrounded = true;
+    }
+  });
+
+
+  // left collision
   if (this.position.x <= 0) {
     this.position.x = 0;
     this.velocity.vx = 0;
   }
 
-  // Right collision
+  // right collision
   if (this.position.x + this.width >= canvasWidth) {
     this.position.x = canvasWidth - this.width;
     this.velocity.vx = 0;

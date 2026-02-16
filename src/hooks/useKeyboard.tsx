@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 type KeyMap = {
   a: boolean;
   d: boolean;
+  e: boolean;
   jump: boolean;
 };
 
@@ -10,6 +11,7 @@ export function useKeyboard() {
   const keys = useRef<KeyMap>({
     a: false,
     d: false,
+    e: false,
     jump: false,
   });
 
@@ -24,6 +26,9 @@ export function useKeyboard() {
         case "d":
           keys.current.d = true;
           break;
+        case "e":
+          keys.current.e = true;
+          break;
         case " ":
           keys.current.jump = true;
           break;
@@ -37,6 +42,9 @@ export function useKeyboard() {
           break;
         case "d":
           keys.current.d = false;
+          break;
+        case "e":
+          keys.current.e = false;
           break;
         case " ":
           keys.current.jump = false;
