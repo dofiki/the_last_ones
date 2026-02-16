@@ -5,7 +5,8 @@ export class Player {
   height: number;
   gravity: number;
   moveSpeed : number;
-  isGrounded : boolean
+  isGrounded : boolean;
+  lootScore : number;
 
   constructor(
     x: number,
@@ -14,7 +15,8 @@ export class Player {
     height: number,
     gravity: number,
     moveSpeed: number = 3.5,
-    isGrounded: boolean = false
+    isGrounded: boolean = false,
+    lootScore: number = 0
 
   ) {
     this.position = { x, y };
@@ -24,6 +26,7 @@ export class Player {
     this.gravity = gravity;
     this.moveSpeed = moveSpeed;
     this.isGrounded = isGrounded;
+    this.lootScore = lootScore;
   }
 
   draw(ctx: CanvasRenderingContext2D) {
@@ -32,9 +35,22 @@ export class Player {
   }
 
   handleMovement(left: boolean, right: boolean, jump: boolean) {
-    if (left) this.velocity.vx = -this.moveSpeed;
-    else if (right) this.velocity.vx = this.moveSpeed;
-    else this.velocity.vx = 0;
+    // Stop movement if outside bounds
+    if (this.position.x >= 500 && right) {
+      this.velocity.vx = 0;
+    } 
+    else if (this.position.x <= 50 && left) {
+      this.velocity.vx = 0;
+    } 
+    else if (left) {
+      this.velocity.vx = -this.moveSpeed;
+    } 
+    else if (right) {
+      this.velocity.vx = this.moveSpeed;
+    } 
+    else {
+      this.velocity.vx = 0;
+    }
 
     if (jump && this.isGrounded) {
       this.velocity.vy = -5; 

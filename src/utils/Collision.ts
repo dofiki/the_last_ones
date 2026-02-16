@@ -13,7 +13,7 @@ For boxes to overlap vertically (same logic):
 - Box A's bottom must be below Box B's top
 */
 
-export function isColliding(player: Player, obstacle: Obstacle): boolean {
+export function isColliding(player: Player , obstacle: Obstacle): boolean {
   return (
     player.position.x < obstacle.position.x + obstacle.width &&
     player.position.x + player.width > obstacle.position.x &&
