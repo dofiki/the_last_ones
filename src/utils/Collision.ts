@@ -15,10 +15,10 @@ For boxes to overlap vertically (same logic):
 
 export function isColliding(player: Player , obstacle: Obstacle): boolean {
   return (
-    player.position.x < obstacle.position.x + obstacle.width &&
-    player.position.x + player.width > obstacle.position.x &&
-    player.position.y < obstacle.position.y + obstacle.height &&
-    player.position.y + player.height > obstacle.position.y
+    player.getPosition().x < obstacle.position.x + obstacle.width &&
+    player.getPosition().x + player.getWidth() > obstacle.position.x &&
+    player.getPosition().y < obstacle.position.y + obstacle.height &&
+    player.getPosition().y + player.getHeight() > obstacle.position.y
   );
 }
 
@@ -29,10 +29,10 @@ export function resolveCollision(player: Player, obstacle: Obstacle): void {
   if (!isColliding(player, obstacle)) return;
 
   // find overlap
-  const overlapLeft = ( player.position.x + player.width ) - obstacle.position.x;
-  const overlapRight = (obstacle.position.x + obstacle.width) - player.position.x;
-  const overlapTop = (player.position.y + player.height) - obstacle.position.y ;
-  const overlapBottom = (obstacle.position.y + obstacle.height) - player.position.y;
+  const overlapLeft = ( player.getPosition().x + player.getWidth()  ) - obstacle.position.x;
+  const overlapRight = (obstacle.position.x + obstacle.width) - player.getPosition().x;
+  const overlapTop = (player.getPosition().y + player.getHeight()) - obstacle.position.y ;
+  const overlapBottom = (obstacle.position.y + obstacle.height) - player.getPosition().y;
 
   // min overlap 
   const minOverLapX = Math.min(overlapLeft, overlapRight); 
@@ -42,24 +42,25 @@ export function resolveCollision(player: Player, obstacle: Obstacle): void {
   if(minOverLapX < minOverLapY){
     // from left 
     if(overlapLeft < overlapRight){
-      player.position.x = obstacle.position.x - player.width;
+      player.getPosition().x = obstacle.position.x - player.getWidth() ;
     }else{
       // from right
-      player.position.x = obstacle.position.x + obstacle.width;
+      player.getPosition().x = obstacle.position.x + obstacle.width;
     }
-    player.velocity.vx = 0;
+    player.getVelocity().vx = 0;
   }
     else{
       // resolving vertical collision
       // from top
       if(overlapTop < overlapBottom){
-        player.position.y = obstacle.position.y - player.height;
+        player.getPosition().y = obstacle.position.y - player.getHeight();
+        player.updateIsGrounded(true);
       }else{
         // from bottom
-        player.position.y = obstacle.position.y + obstacle.height;
+        player.getPosition().y = obstacle.position.y + obstacle.height;
       }
       
-      player.velocity.vy = 0;
+      player.getVelocity().vy = 0;
     }
   }
 

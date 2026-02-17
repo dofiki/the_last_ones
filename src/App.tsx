@@ -1,11 +1,22 @@
 import { useEffect, useRef } from "react";
 import { Player } from "./classes/Player";
-import { Platform } from "./classes/Platform";
 import { Loot } from "./classes/Loot";
-import { useKeyboard } from "./hooks/useKeyboard";
-import { Obstacle } from "./classes/Obstacle";
 import { Stair } from "./classes/Stair";
+import { Platform } from "./classes/Platform";
+import { Obstacle } from "./classes/Obstacle";
+import { useKeyboard } from "./hooks/useKeyboard";
 import { isColliding, resolveCollision } from "./utils/Collision";
+import { resolveSurfaceCollision } from "./utils/SurfaceCollison";
+import { updateCamera } from "./utils/Camera";
+import {
+  SCROLL_THRESHOLD_RIGHT,
+  SCROLL_THRESHOLD_LEFT,
+  SCROLL_SPEED,
+  createPlayer,
+  createPlatforms,
+  createObstacles,
+  createLoot,
+} from "./constants/gameObject";
 
 const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -14,185 +25,91 @@ const App: React.FC = () => {
   const obstacleRef = useRef<Obstacle[]>([]);
   const stairRef = useRef<Stair[]>([]);
   const lootRef = useRef<Loot[]>([]);
-  const GRAVITY: number = 0.09;
-  const eWasPressedRef = useRef<boolean>(false); 
-
-
-  // Screen bounds for camera trigger
-  const SCROLL_THRESHOLD_RIGHT = 400;
-  const SCROLL_THRESHOLD_LEFT = 100;
-  const SCROLL_SPEED = 3.5;
-  
-  // player controllers
+  const eWasPressedRef = useRef<boolean>(false);
   const keys = useKeyboard();
 
-  // initialize game objects
   useEffect(() => {
-    if (!playerRef.current && canvasRef.current) {
-      playerRef.current = new Player(50, 50, 50, 50, GRAVITY);
-      platformRef.current = [
-        new Platform(0, 800, window.innerWidth, 140),
-        new Platform(window.innerWidth + 500, 800, window.innerWidth, 140),
-      ]
-      obstacleRef.current = [
-        new Obstacle(400, window.innerHeight - 240, 100, 113),
-        new Obstacle(500, window.innerHeight - 360, 100, 30),
-        new Obstacle(650, window.innerHeight - 480, 100, 30),
-        new Obstacle(500, window.innerHeight - 580, 100, 30),
-        new Obstacle(700, window.innerHeight - 680, 300, 30),
-        new Obstacle(950, window.innerHeight - 580, 50, 30),
-        new Obstacle(1200, window.innerHeight - 400, 100, 30),
-        new Obstacle(1400, window.innerHeight - 500, 150, 30),
-      ];
-      lootRef.current = [
-        new Loot(965, window.innerHeight - 610, 20, 20),
-        new Loot(1215, window.innerHeight - 430, 20, 20),
-      ];
-      stairRef.current = []
-      
-    }
+    if (!canvasRef.current) return;
+    playerRef.current = createPlayer();
+    platformRef.current = createPlatforms();
+    obstacleRef.current = createObstacles();
+    lootRef.current = createLoot();
+    stairRef.current = [];
   }, []);
 
-  // canvas and game loop
   useEffect(() => {
-
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-   
-    // for pixelated asset
-    // ctx.imageSmoothingEnabled = false;
-    /* chekcing assets
-    const img = new Image();
-    img.src = "/assets/buildings_1_demo.png";
-    */
 
-    // game loop
     const gameLoop = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      /* chekcing asset
-      if (img.complete) {
-        ctx.drawImage(img, 100, 100, 200, 300);
-      }
-      */
+      const player = playerRef.current;
+      if (!player) return;
 
+      // score
       ctx.font = "30px Arial";
-      ctx.fillText(`Score: ${playerRef.current?.lootScore}`,80,80);
+      ctx.fillText(`Score: ${player.getScore()}`, 80, 80);
 
-      if (!playerRef.current || !platformRef.current) return;
+      // input
+      player.handleMovement(keys.current.a, keys.current.d, keys.current.jump);
 
-      // passing input state to player
-      playerRef.current.handleMovement(keys.current.a, keys.current.d, keys.current.jump);
-
-      // handle player power
-      const ePressedNow: boolean = keys.current.e;
-
-      if (ePressedNow && !eWasPressedRef.current && playerRef.current.lootScore >= 2) {
-        // updating loot score  
-        playerRef.current.lootScore -= 2;
-
-          const player = playerRef.current;
-
-          const stairX = player.position.x + player.width + 100;
-          const stairY = player.position.y + player.height /2 ;
-
-          stairRef.current.push(new Stair(stairX, stairY, 40, 20));
-        }
-
-      eWasPressedRef.current = ePressedNow; 
-
-      playerRef.current.update(ctx, canvas.width, [...platformRef.current, ...stairRef.current]);
-
-      // camera scrolling logic 
-      if (keys.current.d && playerRef.current.position.x > SCROLL_THRESHOLD_RIGHT) {
-        // moving right : shift everything left
-        playerRef.current.velocity.vx = 0;
-        playerRef.current.position.x = SCROLL_THRESHOLD_RIGHT;
-        
-        platformRef.current.forEach((platform=>{
-          platform.position.x -= SCROLL_SPEED;        
-        }))
-
-        obstacleRef.current.forEach(obstacle => {
-          obstacle.position.x -= SCROLL_SPEED;
-        });
-        lootRef.current.forEach(loot => {
-          loot.position.x -= SCROLL_SPEED;
-        });
-        stairRef.current.forEach((stair)=>{
-          stair.position.x -= SCROLL_SPEED;
-        })
-      } else if (keys.current.a && playerRef.current.position.x < SCROLL_THRESHOLD_LEFT) {
-        // moving left : shift everything right
-        playerRef.current.velocity.vx = 0;
-        playerRef.current.position.x = SCROLL_THRESHOLD_LEFT;
-        
-        platformRef.current.forEach((platform)=>{
-          platform.position.x += SCROLL_SPEED;
-
-        })
-        obstacleRef.current.forEach(obstacle => {
-          obstacle.position.x += SCROLL_SPEED;
-        });
-        lootRef.current.forEach(loot => {
-          loot.position.x += SCROLL_SPEED;
-        });
-         stairRef.current.forEach((stair)=>{
-          stair.position.x += SCROLL_SPEED;
-        })
+      // stair placement
+      const ePressedNow = keys.current.e;
+      if (ePressedNow && !eWasPressedRef.current && player.getScore() >= 2) {
+        player.addScore(-2);
+        const stairX = player.getPosition().x + player.getWidth() - 20;
+        const stairY = player.getPosition().y + player.getHeight() + 5;
+        stairRef.current.push(new Stair(stairX, stairY, 40, 20));
       }
-      // drawing platformLoot
-      platformRef.current.forEach((platform) =>{
-        platform.draw(ctx)
-      })
+      eWasPressedRef.current = ePressedNow;
 
-      // drawing all obstacles
-      obstacleRef.current.forEach((obstacle) => {
-        obstacle.draw(ctx);
+      // physics
+      player.update(ctx);
 
-        if (playerRef.current) {
-          resolveCollision(playerRef.current, obstacle);
-
-          const playerBottom = playerRef.current.position.y + playerRef.current.height;
-          const obstacleTop = obstacle.position.y;
-          const playerLeft = playerRef.current.position.x;
-          const playerRight = playerRef.current.position.x + playerRef.current.width;
-          const obstacleLeft = obstacle.position.x;
-          const obstacleRight = obstacle.position.x + obstacle.width;
-
-          if (
-            Math.abs(playerBottom - obstacleTop) < 2 &&
-            playerRight > obstacleLeft &&
-            playerLeft < obstacleRight &&
-            playerRef.current.velocity.vy >= 0
-          ) {
-            playerRef.current.isGrounded = true;
-          }
-        }
+      // surface collision
+      [...platformRef.current, ...stairRef.current].forEach((surface) => {
+        resolveSurfaceCollision(player, surface);
       });
 
-      // loot collection
+      // camera
+      updateCamera(
+        player,
+        keys.current.d,
+        keys.current.a,
+        {
+          platforms: platformRef.current,
+          obstacles: obstacleRef.current,
+          loot: lootRef.current,
+          stairs: stairRef.current,
+        },
+        SCROLL_THRESHOLD_RIGHT,
+        SCROLL_THRESHOLD_LEFT,
+        SCROLL_SPEED,
+      );
+
+      // draw surfaces
+      [...platformRef.current, ...stairRef.current].forEach((s) => s.draw(ctx));
+
+      // obstacles
+      obstacleRef.current.forEach((obstacle) => {
+        obstacle.draw(ctx);
+        resolveCollision(player, obstacle);
+      });
+
+      // loot
       lootRef.current = lootRef.current.filter((loot) => {
         loot.draw(ctx);
-        if (playerRef.current && isColliding(playerRef.current, loot)) {
-          playerRef.current.lootScore += 10;
-          console.log(playerRef.current.lootScore);
+        if (isColliding(player, loot)) {
+          player.addScore(10);
           return false;
         }
         return true;
       });
 
-      // stairs
-      stairRef.current.forEach(stair => {
-        stair.draw(ctx);
-      });
-
-
-      playerRef.current.draw(ctx);
-
+      player.draw(ctx);
       requestAnimationFrame(gameLoop);
     };
 

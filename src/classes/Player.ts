@@ -1,14 +1,21 @@
-import type { Platform } from "./Platform";
+interface PlayerConfig {
+  moveSpeed?: number;
+  jumpForce?: number;
+  leftBoundary?: number;
+  rightBoundary?: number;
+  landingThreshold?: number;
+}
 
 export class Player {
-  position: { x: number; y: number };
-  velocity: { vx: number; vy: number };
-  width: number;
-  height: number;
-  gravity: number;
-  moveSpeed : number;
-  isGrounded : boolean;
-  lootScore : number;
+  private position: { x: number; y: number };
+  private velocity: { vx: number; vy: number };
+  private readonly width: number;
+  private readonly height: number;
+  private readonly gravity: number;
+  private readonly config: Required<PlayerConfig>;
+  private isGrounded: boolean = false;
+  private lootScore: number = 0;
+  private color: string = "red";
 
   constructor(
     x: number,
@@ -16,23 +23,57 @@ export class Player {
     width: number,
     height: number,
     gravity: number,
-    moveSpeed: number = 3.5,
-    isGrounded: boolean = false,
-    lootScore: number = 0
-
+    config: PlayerConfig = {},
   ) {
     this.position = { x, y };
     this.velocity = { vx: 0, vy: 0 };
     this.width = width;
     this.height = height;
     this.gravity = gravity;
-    this.moveSpeed = moveSpeed;
-    this.isGrounded = isGrounded;
-    this.lootScore = lootScore;
+
+    this.config = {
+      moveSpeed: config.moveSpeed ?? 3.5,
+      jumpForce: config.jumpForce ?? -5,
+      leftBoundary: config.leftBoundary ?? 50,
+      rightBoundary: config.rightBoundary ?? 500,
+      landingThreshold: config.landingThreshold ?? 10,
+    };
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = "red";
+  getPosition() {
+    return this.position;
+  }
+
+  getHeight() {
+    return this.height;
+  }
+
+  getWidth() {
+    return this.width;
+  }
+
+  getVelocity() {
+    return this.velocity;
+  }
+
+  checkIsGrounded() {
+    return this.isGrounded;
+  }
+
+  updateIsGrounded(status: boolean) {
+    this.isGrounded = status;
+  }
+
+  getScore(): number {
+    return this.lootScore;
+  }
+
+  addScore(points: number): void {
+    this.lootScore += points;
+  }
+
+  draw(ctx: CanvasRenderingContext2D): void {
+    ctx.fillStyle = this.color;
     ctx.fillRect(this.position.x, this.position.y, this.width, this.height);
   }
 
@@ -40,80 +81,35 @@ export class Player {
     // stop movement, if out of bound
     if (this.position.x >= 500 && right) {
       this.velocity.vx = 0;
-    } 
-    else if (this.position.x <= 50 && left) {
+    } else if (this.position.x <= 50 && left) {
       this.velocity.vx = 0;
-    } 
-    else if (left) {
-      this.velocity.vx = -this.moveSpeed;
-    } 
-    else if (right) {
-      this.velocity.vx = this.moveSpeed;
-    } 
-    else {
+    } else if (left) {
+      this.velocity.vx = -this.config.moveSpeed;
+    } else if (right) {
+      this.velocity.vx = this.config.moveSpeed;
+    } else {
       this.velocity.vx = 0;
     }
 
     if (jump && this.isGrounded) {
-      this.velocity.vy = -5; 
-      this.isGrounded = false; 
+      this.velocity.vy = -5;
+      this.isGrounded = false;
     }
   }
 
- update(ctx: CanvasRenderingContext2D, canvasWidth: number, platforms: Platform[]) {
-  // Apply horizontal velocity
-  this.position.x += this.velocity.vx;
-
-  // Apply vertical velocity
-  this.position.y += this.velocity.vy;
-
-  // Apply gravity
-  this.velocity.vy += this.gravity;
-
-  // at spawn : in sky
-  this.isGrounded = false;
-
-  // platform collision : check each platform
-  const playerBottom = this.position.y + this.height;
-  const playerLeft = this.position.x;
-  const playerRight = this.position.x + this.width;
-
-  platforms.forEach((platform) => {
-    const platformTop = platform.position.y;
-    const platformLeft = platform.position.x;
-    const platformRight = platform.position.x + platform.width;
-
-    // check if  horizontally aligned with platform
-    const isHorizontallyAligned = playerRight > platformLeft && playerLeft < platformRight;
-    
-    // check if player is landing on top of platform
-    if (
-      isHorizontallyAligned &&
-      playerBottom >= platformTop &&
-      playerBottom <= platformTop + 10 && // threshold for landing
-      this.velocity.vy >= 0 // only when falling or stationary
-    ) {
-      this.position.y = platformTop - this.height;
-      this.velocity.vy = 0;
-      this.isGrounded = true;
-    }
-  });
-
-
-  // left collision
-  if (this.position.x <= 0) {
-    this.position.x = 0;
-    this.velocity.vx = 0;
+  updatePhysics(): void {
+    // Apply horizontal velocity
+    this.position.x += this.velocity.vx;
+    // Apply vertical velocity
+    this.position.y += this.velocity.vy;
+    // Apply gravity
+    this.velocity.vy += this.gravity;
+    // at spawn : in sky
+    this.isGrounded = false;
   }
 
-  // right collision
-  if (this.position.x + this.width >= canvasWidth) {
-    this.position.x = canvasWidth - this.width;
-    this.velocity.vx = 0;
+  update(ctx: CanvasRenderingContext2D) {
+    this.updatePhysics();
+    this.draw(ctx);
   }
-
-  this.draw(ctx);
-}
-
-
 }
