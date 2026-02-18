@@ -26,8 +26,8 @@ export function resolveSurfaceCollision(
     playerBottom <= surfaceTop + 10 &&
     player.getVelocity().vy >= 0
   ) {
-    player.getPosition().y = surfaceTop - player.getHeight();
-    player.getVelocity().vy = 0;
+    player.setY(surfaceTop - player.getHeight());
+    player.setVY(0);
     player.updateIsGrounded(true);
   }
 }

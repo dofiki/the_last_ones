@@ -17,7 +17,7 @@ export class Player {
   private lootScore: number = 0;
   private color: string = "red";
   private readonly friction = 0.85;
-  private coyoteTime: number = 0.4;
+  private coyoteTime: number = 0.2;
   private coyoteTimeCounter: number = 0;
 
   constructor(
@@ -47,6 +47,27 @@ export class Player {
     return this.position;
   }
 
+  setPosition(x: number, y: number) {
+    this.position = {
+      x: x,
+      y: y,
+    };
+  }
+
+  setX(x: number) {
+    this.position = {
+      ...this.position, // keep y
+      x: x, // update x
+    };
+  }
+
+  setY(y: number) {
+    this.position = {
+      ...this.position, // keep x
+      y: y, // update y
+    };
+  }
+
   getHeight() {
     return this.height;
   }
@@ -59,11 +80,34 @@ export class Player {
     return this.velocity;
   }
 
+  setVelocity(vx: number, vy: number) {
+    this.velocity = {
+      vx: vx,
+      vy: vy,
+    };
+  }
+
+  setVX(vx: number) {
+    this.velocity = {
+      ...this.velocity,
+      vx: vx,
+    };
+  }
+
+  setVY(vy: number) {
+    this.velocity = {
+      ...this.velocity,
+      vy: vy,
+    };
+  }
+
   checkIsGrounded() {
     return this.isGrounded;
   }
 
   updateIsGrounded(status: boolean) {
+    // if status is true (i.e., the player is on the ground)
+    // than we reset the coyote time counter.
     if (status) {
       this.coyoteTimeCounter = this.coyoteTime;
     }
@@ -104,13 +148,14 @@ export class Player {
 
     // count down coyote timer each frame when airborne
     if (!this.isGrounded) {
-      this.coyoteTimeCounter -= 1 / 60; // assumes ~60fps, or pass deltaTime
+      this.coyoteTimeCounter -= 1 / 60;
     }
 
     if (jump && this.coyoteTimeCounter > 0) {
       this.velocity.vy = this.config.jumpForce;
       this.isGrounded = false;
-      this.coyoteTimeCounter = 0; // consume it so no double jump
+      // resetting so there is no double jump
+      this.coyoteTimeCounter = 0;
     }
   }
 

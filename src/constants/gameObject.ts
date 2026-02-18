@@ -15,7 +15,7 @@ export function createPlayer(): Player {
 export function createPlatforms(): Platform[] {
   return [
     new Platform(0, 800, window.innerWidth, 140),
-    new Platform(window.innerWidth + 500, 800, window.innerWidth, 140),
+    new Platform(window.innerWidth + 800, 800, window.innerWidth, 140),
   ];
 }
 
