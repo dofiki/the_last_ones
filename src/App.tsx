@@ -5,7 +5,7 @@ import { Stair } from "./classes/Stair";
 import { Platform } from "./classes/Platform";
 import { Obstacle } from "./classes/Obstacle";
 import { useKeyboard } from "./hooks/useKeyboard";
-import { isColliding, resolveCollision } from "./utils/Collision";
+import { isColliding } from "./utils/Collision";
 import { resolveSurfaceCollision } from "./utils/SurfaceCollison";
 import { updateCamera } from "./utils/Camera";
 import {
@@ -51,7 +51,7 @@ const App: React.FC = () => {
 
       // score
       ctx.font = "30px Arial";
-      ctx.fillText(`Score: ${player.getScore()}`, 80, 80);
+      ctx.fillText(`stair power: ${player.getScore()}`, 80, 80);
 
       // input
       player.handleMovement(keys.current.a, keys.current.d, keys.current.jump);
@@ -96,7 +96,7 @@ const App: React.FC = () => {
       // obstacles
       obstacleRef.current.forEach((obstacle) => {
         obstacle.draw(ctx);
-        resolveCollision(player, obstacle);
+        resolveSurfaceCollision(player, obstacle);
       });
 
       // loot
@@ -110,6 +110,8 @@ const App: React.FC = () => {
       });
 
       player.draw(ctx);
+
+      console.log(window.innerWidth);
       requestAnimationFrame(gameLoop);
     };
 

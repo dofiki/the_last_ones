@@ -6,10 +6,10 @@ import { Player } from "../classes/Player";
 export const GRAVITY = 0.09;
 export const SCROLL_THRESHOLD_RIGHT = 400;
 export const SCROLL_THRESHOLD_LEFT = 100;
-export const SCROLL_SPEED = 3.5;
+export const SCROLL_SPEED = 5;
 
 export function createPlayer(): Player {
-  return new Player(50, 50, 50, 50, GRAVITY);
+  return new Player(50, 500, 50, 50, GRAVITY);
 }
 
 export function createPlatforms(): Platform[] {
